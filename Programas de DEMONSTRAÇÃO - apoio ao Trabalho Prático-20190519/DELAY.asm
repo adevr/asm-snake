@@ -62,12 +62,10 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		FACTOR		db	100
 		metade_FACTOR	db	?
 		resto		db	0
-
-		
+						
 		Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
 		Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
 		Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-		FichMenu			db	   'menu.TXT', 0
 		Fich         	db      'moldura.TXT',0
 		HandleFich      dw      0
 		car_fich        db      ?
@@ -132,7 +130,7 @@ Imp_Fich	PROC
 
         mov     ah,3dh			; vamos abrir ficheiro para leitura 
         mov     al,0			; tipo de ficheiro	
-        lea     dx,FichMenu			; nome do ficheiro
+        lea     dx,Fich			; nome do ficheiro
         int     21h			; abre para leitura 
         jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
         mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
@@ -243,41 +241,36 @@ LE_TECLA_0	ENDP
 move_snake PROC
 
 CICLO:	
-		goto_xy	POSx,POSy	; Vai para nova possição
-		mov 	ah, 08h	; Guarda o Caracter que está na posição do Cursor
+		goto_xy		POSx,POSy	; Vai para nova possição
+		mov 		ah, 08h	; Guarda o Caracter que está na posição do Cursor
 		mov		bh,0		; numero da página
 		int		10h			
-		cmp 	al, '|'	;  na posição do Cursor
+		cmp 		al, '#'	;  na posição do Cursor
 		je		fim
-		cmp 	al, '_'	;  na posição do Cursor
-		je		fim
-				
 
-		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
+		goto_xy		POSxa,POSya		; Vai para a posição anterior do cursor
 		mov		ah, 02h
 		mov		dl, ' ' 	; Coloca ESPAÇO
 		int		21H	
 
 		inc		POSxa
-		goto_xy	POSxa,POSya	
+		goto_xy		POSxa,POSya	
 		mov		ah, 02h
 		mov		dl, ' '		;  Coloca ESPAÇO
 		int		21H	
-		dec 	POSxa
+		dec 		POSxa
 		
 		
 	
 		goto_xy		POSx,POSy	; Vai para posição do cursor
-
-IMPRIME:
-		mov		ah, 02h
-		mov		dl, '<'	; Coloca AVATAR1
+IMPRIME:	mov		ah, 02h
+		mov		dl, '('	; Coloca AVATAR1
 		int		21H
 		
 		inc		POSx
 		goto_xy		POSx,POSy		
 		mov		ah, 02h
-		mov		dl, '*'	; Coloca AVATAR2
+		mov		dl, ')'	; Coloca AVATAR2
 		int		21H	
 		dec		POSx
 		
@@ -286,7 +279,7 @@ IMPRIME:
 		mov		al, POSx	; Guarda a posição do cursor
 		mov		POSxa, al
 		mov		al, POSy	; Guarda a posição do cursor
-		mov 	POSya, al
+		mov 		POSya, al
 		
 LER_SETA:	call 		LE_TECLA_0
 		cmp		ah, 1
