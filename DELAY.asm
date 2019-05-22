@@ -67,7 +67,7 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
 		Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
 		Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-		FichMenu			db	   'menu.TXT', 0
+		FichMenu		db	   'menu.TXT', 0
 		Fich         	db      'moldura.TXT',0
 		HandleFich      dw      0
 		car_fich        db      ?
@@ -124,16 +124,66 @@ PASSA_TEMPO   ENDP
 
 ;********************************************************************************	
 
+Menu_Fich PROC
+; abre ficheiro
+	mov     ah,3dh			; vamos abrir ficheiro para leitura 
+	mov     al,0			; tipo de ficheiro	
+	lea     dx,FichMenu		; nome do ficheiro
+	int     21h			     ; abre para leitura 
+	jc      erro_abrirmenu		; pode aconter erro a abrir o ficheiro 
+	mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
+	jmp     ler_ciclomenu		; depois de abero vamos ler o ficheiro 
+
+	erro_abrirmenu:
+	mov     ah,09h
+	lea     dx,Erro_Open
+	int     21h
+	jmp     sai
+
+	ler_ciclomenu:
+	mov     ah,3fh			; indica que vai ser lido um ficheiro 
+	mov     bx,HandleFich	; bx deve conter o Handle do ficheiro previamente aberto 
+	mov     cx,1			; numero de bytes a ler 
+	lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
+	int     21h			; faz efectivamente a leitura
+	jc	    erro_lermenu		; se carry é porque aconteceu um erro
+	cmp	    ax,0		     ;EOF?	verifica se já estamos no fim do ficheiro 
+	je	    fecha_ficheiromenu	; se EOF fecha o ficheiro 
+	mov     ah,02h			; coloca o caracter no ecran
+	mov	    dl,car_fich	; este é o caracter a enviar para o ecran
+	int	    21h			; imprime no ecran
+	jmp	    ler_ciclomenu		; continua a ler o ficheiro
+
+	erro_lermenu:
+	mov     ah,09h
+	lea     dx,Erro_Ler_Msg
+	int     21h
+
+	fecha_ficheiromenu:					; vamos fechar o ficheiro 
+	mov     ah,3eh
+	mov     bx,HandleFich
+	int     21h
+	jnc     sai
+
+	mov     ah,09h			; o ficheiro pode não fechar correctamente
+	lea     dx,Erro_Close
+	Int     21h
+	sai:	  RET
+Menu_Fich	endp
+
+
 
 
 Imp_Fich	PROC
+
+
 
 ;abre ficheiro
 
         mov     ah,3dh			; vamos abrir ficheiro para leitura 
         mov     al,0			; tipo de ficheiro	
-        lea     dx,FichMenu			; nome do ficheiro
-        int     21h			; abre para leitura 
+        lea     dx,Fich		; nome do ficheiro
+        int     21h			     ; abre para leitura 
         jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
         mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
         jmp     ler_ciclo		; depois de abero vamos ler o ficheiro 
@@ -366,6 +416,15 @@ fim:		goto_xy		40,23
 
 move_snake ENDP
 
+
+one proc
+	call		Imp_Fich
+	call		move_snake
+one endp
+
+not_one proc 
+
+not_one endp
 ;#############################################################################
 ;             MAIN
 ;#############################################################################
@@ -374,9 +433,12 @@ MENU    Proc
 		MOV     	DS,AX
 		MOV		AX,0B800H
 		MOV		ES,AX		; ES indica segmento de memória de VIDEO
-		CALL 		APAGA_ECRAN 
-		CALL		Imp_Fich
-		call		move_snake
+		call 	APAGA_ECRAN 
+		call      Menu_Fich
+		call		LE_TECLA_0
+		cmp		AL, '1'
+		jnz		not_one
+		jmp		one
 		
 		MOV		AH,4Ch
 		INT		21h
