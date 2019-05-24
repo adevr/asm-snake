@@ -422,9 +422,7 @@ one proc
 	call		move_snake
 one endp
 
-not_one proc 
 
-not_one endp
 ;#############################################################################
 ;             MAIN
 ;#############################################################################
@@ -435,11 +433,17 @@ MENU    Proc
 		MOV		ES,AX		; ES indica segmento de memória de VIDEO
 		call 	APAGA_ECRAN 
 		call      Menu_Fich
-		call		LE_TECLA_0
+Tecla:
+		mov		ah, 08h
+		int		21h
 		cmp		AL, '1'
-		jnz		not_one
+		jne		not_one
 		jmp		one
-		
+not_one: 
+		cmp		AL, 'x'
+		jne		Tecla
+		jmp 		fim
+fim:	
 		MOV		AH,4Ch
 		INT		21h
 MENU    endp
