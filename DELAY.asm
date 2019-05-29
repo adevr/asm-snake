@@ -163,6 +163,9 @@ calc_aleat proc near
 calc_aleat endp
 
 ;********************************************************************************	
+;********************************************************************************
+; ROTINA PARA ABRIR O MENU INICIAL
+;********************************************************************************
 
 Menu_Fich PROC
 ; abre ficheiro
@@ -211,13 +214,11 @@ Menu_Fich PROC
 	sai:	  RET
 Menu_Fich	endp
 
-
-
+;*************************************************************************
+;	ROTINA PARA ABRIR
+;*************************************************************************
 
 Imp_Fich	PROC
-
-
-
 ;abre ficheiro
 
         mov     ah,3dh			; vamos abrir ficheiro para leitura 
@@ -268,7 +269,8 @@ Imp_Fich	endp
 ;########################################################################
 
 ;********************************************************************************
-;ROTINA PARA APAGAR ECRAN
+;	ROTINA PARA APAGAR ECRAN
+;********************************************************************************
 
 APAGA_ECRAN	PROC
 		PUSH BX
@@ -294,6 +296,18 @@ APAGA:
 		RET
 APAGA_ECRAN	ENDP
 
+
+;*******************************************
+; 	ROTINA PARA TER DELAY
+;*******************************************
+delay proc   
+  mov cx, 7      ;HIGH WORD.
+  mov dx, 0A120h ;LOW WORD.
+  mov ah, 86h    ;WAIT.
+  int 15h
+  ret
+delay endp 
+
 ;********************************************************************************
 ; LEITURA DE UMA TECLA DO TECLADO    (ALTERADO)
 ; LE UMA TECLA	E DEVOLVE VALOR EM AH E AL
@@ -302,6 +316,7 @@ APAGA_ECRAN	ENDP
 ; AL DEVOLVE O CÓDIGO DA TECLA PREMIDA
 ; Se não foi premida tecla, devolve ah=0 e al = 0
 ;********************************************************************************
+
 LE_TECLA_0	PROC
 
 	;	call 	Trata_Horas
@@ -325,11 +340,10 @@ SAI_TECLA:
 		RET
 LE_TECLA_0	ENDP
 
-
-
-
-
 ;#############################################################################
+;*****************************************************************************
+;	ROTINA PARA MOVER A SNAKE
+;*****************************************************************************
 move_snake PROC
 
 CICLO:	
@@ -345,8 +359,11 @@ CICLO:
 
 		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
 		mov		ah, 02h
-		mov		dl, ' ' 	; Coloca ESPAÇO
-		int		21H	
+		cmp 		dl, ' '
+		jne		inserir_alimento
+		
+inserir_alimento:
+		call 	alimento
 
 		inc		POSxa
 		goto_xy	POSxa,POSya	
@@ -354,10 +371,10 @@ CICLO:
 		mov		dl, ' '		;  Coloca ESPAÇO
 		int		21H	
 		dec 	POSxa
-		
-		
+			
 	
 		goto_xy		POSx,POSy	; Vai para posição do cursor
+		
 
 IMPRIME:
 		mov		ah, 02h
@@ -378,7 +395,8 @@ IMPRIME:
 		mov		al, POSy	; Guarda a posição do cursor
 		mov 	POSya, al
 		
-		call 	alimento
+		
+
 LER_SETA:	call 		LE_TECLA_0
 		cmp		ah, 1
 		je		ESTEND
@@ -454,16 +472,22 @@ DIREITA:
 
 fim:		goto_xy		40,23
 		RET
-
 move_snake ENDP
 
+;********************************************************
+;	METODO QUE CHAMA A MOLDURA E INICIA A SNAKE
+;********************************************************
 
 one proc
 	call		Imp_Fich
 	call		move_snake
-
 one endp
 
+
+
+;********************************************************
+;	ROTINA PARA INSERIR OS ALIMENTOS NA MOLDURA
+;********************************************************
 alimento proc
 
         goto_xy 5,5
@@ -477,15 +501,15 @@ ciclo:
     xor     dx,dx
 	div     cx
 	add     dl,48
-	mov     pontos[di-1],dl
-	dec     di
-	cmp     di,0
+	;mov     pontos[di-1],dl
+	;dec     di
+	;cmp     di,0
 	;cmp     ax,0
-	jne     ciclo
+	;jne     ciclo
 
-	lea     dx,pontos
+	;lea     dx,pontos
 	mov     ah,09h
-	int     21h
+	;int     21h
 
 posicao_x:
         call	calc_aleat	; Calcula próximo aleatório que é colocado na pilha
@@ -537,9 +561,9 @@ maca_madura:
         jmp     fim_fruta
 
 fim_fruta:
-
         ret
 alimento endp
+
 ;#############################################################################
 ;             MAIN
 ;#############################################################################
