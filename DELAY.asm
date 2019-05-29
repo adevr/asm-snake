@@ -47,13 +47,20 @@ PILHA	ENDS
 	
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
+	
+		ultimo_num_aleat dw 0
 
-		POSy	db	10	; a linha pode ir de [1 .. 25]
-		POSx	db	40	; POSx pode ir [1..80]	
-		POSya		db	5	; Posição anterior de y
-		POSxa		db	10	; Posição anterior de x
-	
-	
+		pontos_m db  6 dup ('0'),'$'
+		pontos db  6 dup ('0'),'$'
+
+		POSyf	db	3	; Posição fruta de y
+		POSxf	db	8	; Posição fruta de x
+
+        POSy    db 12	; a linha pode ir de [1..25]
+		POSx    db 40	; a coluna pode ir de [1..80]
+        POSya	db	5	; Posição anterior de y
+		POSxa	db	10	; Posição anterior de x
+
 		PASSA_T		dw	0
 		PASSA_T_ant	dw	0
 		direccao	db	3
@@ -371,6 +378,7 @@ IMPRIME:
 		mov		al, POSy	; Guarda a posição do cursor
 		mov 	POSya, al
 		
+		call 	alimento
 LER_SETA:	call 		LE_TECLA_0
 		cmp		ah, 1
 		je		ESTEND
@@ -453,9 +461,85 @@ move_snake ENDP
 one proc
 	call		Imp_Fich
 	call		move_snake
+
 one endp
 
+alimento proc
 
+        goto_xy 5,5
+        call	calc_aleat
+        pop	    ax
+
+	mov     di,6
+	mov     cx,10
+
+ciclo:
+    xor     dx,dx
+	div     cx
+	add     dl,48
+	mov     pontos[di-1],dl
+	dec     di
+	cmp     di,0
+	;cmp     ax,0
+	jne     ciclo
+
+	lea     dx,pontos
+	mov     ah,09h
+	int     21h
+
+posicao_x:
+        call	calc_aleat	; Calcula próximo aleatório que é colocado na pilha
+        pop	    ax
+
+        cmp     al,2
+        jbe     posicao_x
+        cmp     al,56
+        jae     posicao_x
+        mov     POSxf,al
+
+posicao_y:
+        call	calc_aleat	; Calcula próximo aleatório que é colocado na pinha
+        pop	    ax
+
+        cmp     ah,1
+        jbe     posicao_x
+        cmp     ah,21
+        jae     posicao_x
+        mov     POSyf,ah
+
+        call	calc_aleat	; Calcula próximo aleatório que é colocado na pinha
+        pop	    ax
+        and     ax,00000001
+
+        jp      maca_madura
+        jnp     maca_verde
+
+maca_verde:
+        goto_xy POSxf,POSyf
+        mov		ah, 09h
+        mov     bl, 00000010b
+        mov     cx, 1
+        int     10h
+        mov		ah, 02h
+        mov		dl, 0BEh
+        int		21h
+        jmp     fim_fruta
+
+maca_madura:
+        goto_xy POSxf,POSyf
+        mov		ah, 09h
+        mov     bl, 00000100b
+        mov     cx, 1
+        int     10h
+        mov		ah, 02h
+        mov		dl, 0BDh
+        int		21h
+        jmp     fim_fruta
+
+fim_fruta:
+
+        ret
+alimento endp
 ;#############################################################################
 ;             MAIN
 ;#############################################################################
