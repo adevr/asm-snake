@@ -494,6 +494,13 @@ CalcAleat proc near
 		mov   	es, ax	
 		mov	linha, 	8	; O Tabuleiro vai come�ar a ser desenhado na linha 8 
 		mov	nlinhas, 22	; O Tabuleiro vai ter 6 linhas
+		
+		
+
+ciclo:  	
+		; mov 	dh,	car	; vai imprimir o caracter "SAPCE"
+		; mov	es:[bx],dh	;
+	
 
 	pop	dx
 	pop	cx
