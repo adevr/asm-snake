@@ -62,12 +62,10 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		FACTOR		db	100
 		metade_FACTOR	db	?
 		resto		db	0
-
-		
+						
 		Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
 		Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
 		Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-		FichMenu		db	   'menu.TXT', 0
 		Fich         	db      'moldura.TXT',0
 		HandleFich      dw      0
 		car_fich        db      ?
@@ -120,103 +118,20 @@ fim_passa:
 PASSA_TEMPO   ENDP 
 
 
-calc_aleat proc near
-        sub	    sp,2
-        push	bp
-        mov	    bp,sp
-        push	ax
-        push	cx
-        push	dx
 
-        mov	    ax,[bp+4]
-        mov	    [bp+2],ax
-
-        mov	    ah,00h
-        int	    1Ah
-
-        add	    dx,ultimo_num_aleat	    ; vai buscar o aleatório anterior
-        add	    cx,dx
-        mov	    ax,65521
-        push	dx
-        mul	    cx
-        pop	    dx
-        xchg	dl,dh
-        add	    dx,32749
-        add	    dx,ax
-
-        mov	    ultimo_num_aleat,dx	    ; guarda o novo numero aleatório
-
-        mov	    [BP+4],dx		        ; o aleatório é passado por pilha
-
-        pop	    dx
-        pop	    cx
-        pop	    ax
-        pop	    bp
-        ret
-calc_aleat endp
 
 ;********************************************************************************	
-
-Menu_Fich PROC
-; abre ficheiro
-	mov     ah,3dh			; vamos abrir ficheiro para leitura 
-	mov     al,0			; tipo de ficheiro	
-	lea     dx,FichMenu		; nome do ficheiro
-	int     21h			     ; abre para leitura 
-	jc      erro_abrirmenu		; pode aconter erro a abrir o ficheiro 
-	mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
-	jmp     ler_ciclomenu		; depois de abero vamos ler o ficheiro 
-
-	erro_abrirmenu:
-	mov     ah,09h
-	lea     dx,Erro_Open
-	int     21h
-	jmp     sai
-
-	ler_ciclomenu:
-	mov     ah,3fh			; indica que vai ser lido um ficheiro 
-	mov     bx,HandleFich	; bx deve conter o Handle do ficheiro previamente aberto 
-	mov     cx,1			; numero de bytes a ler 
-	lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
-	int     21h			; faz efectivamente a leitura
-	jc	    erro_lermenu		; se carry é porque aconteceu um erro
-	cmp	    ax,0		     ;EOF?	verifica se já estamos no fim do ficheiro 
-	je	    fecha_ficheiromenu	; se EOF fecha o ficheiro 
-	mov     ah,02h			; coloca o caracter no ecran
-	mov	    dl,car_fich	; este é o caracter a enviar para o ecran
-	int	    21h			; imprime no ecran
-	jmp	    ler_ciclomenu		; continua a ler o ficheiro
-
-	erro_lermenu:
-	mov     ah,09h
-	lea     dx,Erro_Ler_Msg
-	int     21h
-
-	fecha_ficheiromenu:					; vamos fechar o ficheiro 
-	mov     ah,3eh
-	mov     bx,HandleFich
-	int     21h
-	jnc     sai
-
-	mov     ah,09h			; o ficheiro pode não fechar correctamente
-	lea     dx,Erro_Close
-	Int     21h
-	sai:	  RET
-Menu_Fich	endp
-
 
 
 
 Imp_Fich	PROC
 
-
-
 ;abre ficheiro
 
         mov     ah,3dh			; vamos abrir ficheiro para leitura 
         mov     al,0			; tipo de ficheiro	
-        lea     dx,Fich		; nome do ficheiro
-        int     21h			     ; abre para leitura 
+        lea     dx,Fich			; nome do ficheiro
+        int     21h			; abre para leitura 
         jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
         mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
         jmp     ler_ciclo		; depois de abero vamos ler o ficheiro 
@@ -326,41 +241,36 @@ LE_TECLA_0	ENDP
 move_snake PROC
 
 CICLO:	
-		goto_xy	POSx,POSy	; Vai para nova possição
-		mov 	ah, 08h	; Guarda o Caracter que está na posição do Cursor
+		goto_xy		POSx,POSy	; Vai para nova possição
+		mov 		ah, 08h	; Guarda o Caracter que está na posição do Cursor
 		mov		bh,0		; numero da página
 		int		10h			
-		cmp 	al, '|'	;  na posição do Cursor
+		cmp 		al, '#'	;  na posição do Cursor
 		je		fim
-		cmp 	al, '_'	;  na posição do Cursor
-		je		fim
-				
 
-		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
+		goto_xy		POSxa,POSya		; Vai para a posição anterior do cursor
 		mov		ah, 02h
 		mov		dl, ' ' 	; Coloca ESPAÇO
 		int		21H	
 
 		inc		POSxa
-		goto_xy	POSxa,POSya	
+		goto_xy		POSxa,POSya	
 		mov		ah, 02h
 		mov		dl, ' '		;  Coloca ESPAÇO
 		int		21H	
-		dec 	POSxa
+		dec 		POSxa
 		
 		
 	
 		goto_xy		POSx,POSy	; Vai para posição do cursor
-
-IMPRIME:
-		mov		ah, 02h
-		mov		dl, '<'	; Coloca AVATAR1
+IMPRIME:	mov		ah, 02h
+		mov		dl, '('	; Coloca AVATAR1
 		int		21H
 		
 		inc		POSx
 		goto_xy		POSx,POSy		
 		mov		ah, 02h
-		mov		dl, '*'	; Coloca AVATAR2
+		mov		dl, ')'	; Coloca AVATAR2
 		int		21H	
 		dec		POSx
 		
@@ -369,7 +279,7 @@ IMPRIME:
 		mov		al, POSx	; Guarda a posição do cursor
 		mov		POSxa, al
 		mov		al, POSy	; Guarda a posição do cursor
-		mov 	POSya, al
+		mov 		POSya, al
 		
 LER_SETA:	call 		LE_TECLA_0
 		cmp		ah, 1
@@ -449,13 +359,6 @@ fim:		goto_xy		40,23
 
 move_snake ENDP
 
-
-one proc
-	call		Imp_Fich
-	call		move_snake
-one endp
-
-
 ;#############################################################################
 ;             MAIN
 ;#############################################################################
@@ -464,19 +367,10 @@ MENU    Proc
 		MOV     	DS,AX
 		MOV		AX,0B800H
 		MOV		ES,AX		; ES indica segmento de memória de VIDEO
-		call 	APAGA_ECRAN 
-		call      Menu_Fich
-Tecla:
-		mov		ah, 08h
-		int		21h
-		cmp		AL, '1'
-		jne		not_one
-		jmp		one
-not_one: 
-		cmp		AL, 'x'
-		jne		Tecla
-		jmp 		fim
-fim:	
+		CALL 		APAGA_ECRAN 
+		CALL		Imp_Fich
+		call		move_snake
+		
 		MOV		AH,4Ch
 		INT		21h
 MENU    endp

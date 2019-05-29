@@ -48,6 +48,11 @@ PILHA	ENDS
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
 
+		ultimo_num_aleat dw	0
+
+		linha		db	0	; Define o n�mero da linha que est� a ser desenhada
+		nlinhas		db	0
+
 		POSy	db	10	; a linha pode ir de [1 .. 25]
 		POSx	db	40	; POSx pode ir [1..80]	
 		POSya		db	5	; Posição anterior de y
@@ -120,40 +125,7 @@ fim_passa:
 PASSA_TEMPO   ENDP 
 
 
-calc_aleat proc near
-        sub	    sp,2
-        push	bp
-        mov	    bp,sp
-        push	ax
-        push	cx
-        push	dx
 
-        mov	    ax,[bp+4]
-        mov	    [bp+2],ax
-
-        mov	    ah,00h
-        int	    1Ah
-
-        add	    dx,ultimo_num_aleat	    ; vai buscar o aleatório anterior
-        add	    cx,dx
-        mov	    ax,65521
-        push	dx
-        mul	    cx
-        pop	    dx
-        xchg	dl,dh
-        add	    dx,32749
-        add	    dx,ax
-
-        mov	    ultimo_num_aleat,dx	    ; guarda o novo numero aleatório
-
-        mov	    [BP+4],dx		        ; o aleatório é passado por pilha
-
-        pop	    dx
-        pop	    cx
-        pop	    ax
-        pop	    bp
-        ret
-calc_aleat endp
 
 ;********************************************************************************	
 
@@ -334,6 +306,7 @@ CICLO:
 		je		fim
 		cmp 	al, '_'	;  na posição do Cursor
 		je		fim
+	
 				
 
 		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
@@ -347,8 +320,42 @@ CICLO:
 		mov		dl, ' '		;  Coloca ESPAÇO
 		int		21H	
 		dec 	POSxa
+
+ciclo2:		mov	al, 160		
+		mov	ah, linha
+		mul	ah
+		add	ax, 60
+		mov 	bx, ax		; Determina Endere�o onde come�a a "linha". bx = 160*linha + 60
+
+		mov	cx, 9		; S�o 9 colunas 
+
+novacor:	
+		call	CalcAleat	; Calcula pr�ximo aleat�rio que � colocado na pinha 
+		;pop	ax ; 		; Vai buscar 'a pilha o n�mero aleat�rio
+		and 	al,01110000b	; posi��o do ecran com cor de fundo aleat�rio e caracter a preto
+		cmp	al, 0		; Se o fundo de ecran � preto
+		je	novacor		; vai buscar outra cor 
+
+		; mov 	dh,	   car	; Repete mais uma vez porque cada pe�a do tabuleiro ocupa dois carecteres de ecran
+		; mov	es:[bx],   dh		
+		mov	es:[bx+1], al	; Coloca as caracter�sticas de cor da posi��o atual 
+		inc	bx		
+		inc	bx		; pr�xima posi��o e ecran dois bytes � frente 
+
+		; mov 	dh,	   car	; Repete mais uma vez porque cada pe�a do tabuleiro ocupa dois carecteres de ecran
+		; mov	es:[bx],   dh
+		mov	es:[bx+1], al
+		inc	bx
+		inc	bx
 		
+		mov	di,100 		;delay de 1 centesimo de segundo
+		call	PASSA_TEMPO
 		
+		inc	linha		; Vai desenhar a pr�xima linha
+		dec	nlinhas		; contador de linhas
+		mov	al, nlinhas
+		cmp	al, 0		; verifica se j� desenhou todas as linhas 
+		jne	ciclo2		; se ainda h� linhas a desenhar continua 		
 	
 		goto_xy		POSx,POSy	; Vai para posição do cursor
 
@@ -455,7 +462,46 @@ one proc
 	call		move_snake
 one endp
 
+CalcAleat proc near
 
+	sub	sp,2		; 
+	push	bp
+	mov	bp,sp
+	push	ax
+	push	cx
+	push	dx	
+	mov	ax,[bp+4]
+	mov	[bp+2],ax
+
+	mov	ah,00h
+	int	1ah
+
+	add	dx,ultimo_num_aleat	; vai buscar o aleat�rio anterior
+	add	cx,dx	
+	mov	ax,65521
+	push	dx
+	mul	cx			
+	pop	dx			 
+	xchg	dl,dh
+	add	dx,32749
+	add	dx,ax
+
+	mov	ultimo_num_aleat,dx	; guarda o novo numero aleat�rio  
+
+	mov	[BP+4],dx		; o aleat�rio � passado por pilha
+
+		mov   	ax, 0b800h	; Segmento de mem�ria de v�deo onde vai ser desenhado o tabuleiro
+		mov   	es, ax	
+		mov	linha, 	8	; O Tabuleiro vai come�ar a ser desenhado na linha 8 
+		mov	nlinhas, 22	; O Tabuleiro vai ter 6 linhas
+
+	pop	dx
+	pop	cx
+	pop	ax
+	pop	bp
+	ret
+CalcAleat endp
+	
 ;#############################################################################
 ;             MAIN
 ;#############################################################################

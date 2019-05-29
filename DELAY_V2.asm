@@ -48,6 +48,8 @@ PILHA	ENDS
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
 
+        ultimo_num_aleat dw 0
+
 		POSy	db	10	; a linha pode ir de [1 .. 25]
 		POSx	db	40	; POSx pode ir [1..80]	
 		POSya		db	5	; Posição anterior de y
@@ -72,6 +74,9 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		HandleFich      dw      0
 		car_fich        db      ?
 		
+		linha		db	0	; Define o n�mero da linha que est� a ser desenhada
+		nlinhas		db	0
+
 DSEG    ENDS
 
 CSEG    SEGMENT PARA PUBLIC 'CODE'
@@ -120,40 +125,7 @@ fim_passa:
 PASSA_TEMPO   ENDP 
 
 
-calc_aleat proc near
-        sub	    sp,2
-        push	bp
-        mov	    bp,sp
-        push	ax
-        push	cx
-        push	dx
 
-        mov	    ax,[bp+4]
-        mov	    [bp+2],ax
-
-        mov	    ah,00h
-        int	    1Ah
-
-        add	    dx,ultimo_num_aleat	    ; vai buscar o aleatório anterior
-        add	    cx,dx
-        mov	    ax,65521
-        push	dx
-        mul	    cx
-        pop	    dx
-        xchg	dl,dh
-        add	    dx,32749
-        add	    dx,ax
-
-        mov	    ultimo_num_aleat,dx	    ; guarda o novo numero aleatório
-
-        mov	    [BP+4],dx		        ; o aleatório é passado por pilha
-
-        pop	    dx
-        pop	    cx
-        pop	    ax
-        pop	    bp
-        ret
-calc_aleat endp
 
 ;********************************************************************************	
 
@@ -334,14 +306,13 @@ CICLO:
 		je		fim
 		cmp 	al, '_'	;  na posição do Cursor
 		je		fim
-				
-
+		cmp 	al, '['
+		je		novacor
+		
 		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
 		mov		ah, 02h
 		mov		dl, ' ' 	; Coloca ESPAÇO
-		int		21H	
 
-		inc		POSxa
 		goto_xy	POSxa,POSya	
 		mov		ah, 02h
 		mov		dl, ' '		;  Coloca ESPAÇO
@@ -360,7 +331,6 @@ IMPRIME:
 		inc		POSx
 		goto_xy		POSx,POSy		
 		mov		ah, 02h
-		mov		dl, '*'	; Coloca AVATAR2
 		int		21H	
 		dec		POSx
 		
@@ -370,7 +340,28 @@ IMPRIME:
 		mov		POSxa, al
 		mov		al, POSy	; Guarda a posição do cursor
 		mov 	POSya, al
+
+		jmp		LER_SETA
+
+novacor:	
+		call	CalcAleat	; Calcula pr�ximo aleat�rio que � colocado na pinha 
+		pop		ax ; 		; Vai buscar 'a pilha o n�mero aleat�rio
+		and 	al, dl	; posi��o do ecran com cor de fundo aleat�rio e caracter a preto
+		cmp		al, 0		; Se o fundo de ecran � preto
+		je		novacor		; vai buscar outra cor 
+	
+		mov	es:[bx+2], al	; Coloca as caracter�sticas de cor da posi��o atual 
+		inc	bx		
+
+		mov	di,1000 		;delay de 1 centesimo de segundo
+		call	PASSA_TEMPO
 		
+		inc	linha	; Vai desenhar a pr�xima linha
+		dec	nlinhas	; contador de linhas
+		mov	al, nlinhas
+		
+		call CICLO
+
 LER_SETA:	call 		LE_TECLA_0
 		cmp		ah, 1
 		je		ESTEND
@@ -449,7 +440,41 @@ fim:		goto_xy		40,23
 
 move_snake ENDP
 
+CalcAleat  proc near
 
+	sub	sp,2		; 
+	push	bp
+	mov	bp,sp
+	push	ax
+	push	cx
+	push	dx	
+	mov	ax,[bp+4]
+	mov	[bp+2],ax
+
+	mov	ah,00h
+	int	1ah
+
+	add	dx,ultimo_num_aleat	; vai buscar o aleat�rio anterior
+	add	cx,dx	
+	mov	ax,65521
+	push	dx
+	mul	cx			
+	pop	dx			 
+	xchg	dl,dh
+	add	dx,32749
+	add	dx,ax
+
+	mov	ultimo_num_aleat,dx	; guarda o novo numero aleat�rio  
+
+	mov	[BP],dx		; o aleat�rio � passado por pilha
+
+	pop	dx
+	pop	cx
+	pop	ax
+	pop	bp
+	ret
+
+CalcAleat endp
 one proc
 	call		Imp_Fich
 	call		move_snake
