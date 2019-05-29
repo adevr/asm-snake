@@ -498,15 +498,14 @@ CalcAleat proc near
 		
 
 ciclo:  	
-		; mov 	dh,	car	; vai imprimir o caracter "SAPCE"
-		; mov	es:[bx],dh	;
-	
-
+	;mov 	dh,	car	; vai imprimir o caracter "SAPCE"
+	mov	es:[bx],dh	;
 	pop	dx
 	pop	cx
 	pop	ax
 	pop	bp
 	ret
+	
 CalcAleat endp
 	
 ;#############################################################################
@@ -515,23 +514,23 @@ CalcAleat endp
 MENU    Proc
 		MOV     	AX,DSEG
 		MOV     	DS,AX
-		MOV		AX,0B800H
-		MOV		ES,AX		; ES indica segmento de memória de VIDEO
-		call 	APAGA_ECRAN 
-		call      Menu_Fich
+		MOV		    AX,0B800H
+		MOV		    ES,AX		; ES indica segmento de memória de VIDEO
+		call 	    APAGA_ECRAN 
+		call        Menu_Fich
 Tecla:
-		mov		ah, 08h
-		int		21h
-		cmp		AL, '1'
-		jne		not_one
-		jmp		one
+		mov			ah, 08h
+		int			21h
+		cmp			AL, '1'
+		jne			not_one
+		jmp			one
 not_one: 
-		cmp		AL, 'x'
-		jne		Tecla
+		cmp			AL, 'x'
+		jne			Tecla
 		jmp 		fim
 fim:	
-		MOV		AH,4Ch
-		INT		21h
+		MOV			AH,4Ch
+		INT			21h
 MENU    endp
 cseg	ends
 end     MENU
