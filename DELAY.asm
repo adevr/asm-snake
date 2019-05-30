@@ -47,6 +47,10 @@ PILHA	ENDS
 	
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
+        POSy    db 12	; a linha pode ir de [1..25]
+		POSx    db 40	; a coluna pode ir de [1..80]
+        POSya	db	5	; Posição anterior de y
+		POSxa	db	10	; Posição anterior de x
 	
 		ultimo_num_aleat dw 0
 
@@ -56,10 +60,6 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		POSyf	db	3	; Posição fruta de y
 		POSxf	db	8	; Posição fruta de x
 
-        POSy    db 12	; a linha pode ir de [1..25]
-		POSx    db 40	; a coluna pode ir de [1..80]
-        POSya	db	5	; Posição anterior de y
-		POSxa	db	10	; Posição anterior de x
 
 		PASSA_T		dw	0
 		PASSA_T_ant	dw	0
@@ -345,6 +345,9 @@ LE_TECLA_0	ENDP
 ;	ROTINA PARA MOVER A SNAKE
 ;*****************************************************************************
 move_snake PROC
+	pushf
+	push ax
+	; ...
 
 CICLO:	
 		goto_xy	POSx,POSy	; Vai para nova possição
@@ -356,37 +359,40 @@ CICLO:
 		cmp 	al, '_'	;  na posição do Cursor
 		je		fim
 				
+		;cmp 	al, '0'	;  cobra nao se mexeu!!!
+		;je		salta_alimento
 
-		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
-		mov		ah, 02h
-		cmp 		dl, ' '
-		jne		inserir_alimento
-		
-inserir_alimento:
+		;goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
+		;mov		ah, 02h
+		cmp 		al, ' '
+		je		salta_alimento
 		call 	alimento
-
-		inc		POSxa
-		goto_xy	POSxa,POSya	
-		mov		ah, 02h
-		mov		dl, ' '		;  Coloca ESPAÇO
-		int		21H	
-		dec 	POSxa
-			
-	
-		goto_xy		POSx,POSy	; Vai para posição do cursor
+		;jne		inserir_alimento
 		
+;inserir_alimento:
+		
+salta_alimento:
 
+		goto_xy	POSxa,POSya	
+		mov		ah, 09h
+		mov		bh, 0
+		mov		al, ' '		;  Coloca ESPAÇO
+		mov		bl, 00000111b
+		mov		cx, 1
+		int		10H	
+		
 IMPRIME:
+		goto_xy		POSx,POSy	; Vai para posição do cursor
 		mov		ah, 02h
-		mov		dl, '<'	; Coloca AVATAR1
+		mov		dl, '0'	; Coloca AVATAR1
 		int		21H
 		
-		inc		POSx
-		goto_xy		POSx,POSy		
-		mov		ah, 02h
-		mov		dl, '*'	; Coloca AVATAR2
-		int		21H	
-		dec		POSx
+		;inc		POSx
+		;goto_xy		POSx,POSy		
+		;mov		ah, 02h
+		;mov		dl, '*'	; Coloca AVATAR2
+		;int		21H	
+		;dec		POSx
 		
 		goto_xy		POSx,POSy	; Vai para posição do cursor
 		
@@ -426,7 +432,6 @@ verifica_0:	mov		al, direccao
 		cmp 		al, 0
 		jne		verifica_1
 		inc		POSx		;Direita
-		inc		POSx		;Direita
 		jmp		CICLO
 		
 verifica_1:	mov 		al, direccao
@@ -439,7 +444,6 @@ verifica_2:	mov 		al, direccao
 		cmp		al, 2
 		jne		verifica_3
 		dec		POSx		;Esquerda
-		dec		POSx		;Esquerda
 		jmp		CICLO
 		
 verifica_3:	mov 		al, direccao
@@ -451,26 +455,29 @@ verifica_3:	mov 		al, direccao
 ESTEND:		cmp 		al,48h
 		jne		BAIXO
 		mov		direccao, 1
-		jmp		CICLO
+		jmp		LER_SETA
 
 BAIXO:		cmp		al,50h
 		jne		ESQUERDA
 		mov		direccao, 3
-		jmp		CICLO
+		jmp		LER_SETA
 
 ESQUERDA:
 		cmp		al,4Bh
 		jne		DIREITA
 		mov		direccao, 2
-		jmp		CICLO
+		jmp		LER_SETA
 
 DIREITA:
 		cmp		al,4Dh
 		jne		LER_SETA 
 		mov		direccao, 0	
-		jmp		CICLO
+		jmp		LER_SETA
 
 fim:		goto_xy		40,23
+		; ...
+		pop ax
+		popf
 		RET
 move_snake ENDP
 
@@ -480,7 +487,11 @@ move_snake ENDP
 
 one proc
 	call		Imp_Fich
+	call      alimento
+	call      alimento
+	call      alimento
 	call		move_snake
+	ret
 one endp
 
 
@@ -541,7 +552,7 @@ posicao_y:
 maca_verde:
         goto_xy POSxf,POSyf
         mov		ah, 09h
-        mov     bl, 00000010b
+        mov     bl, 'v'
         mov     cx, 1
         int     10h
         mov		ah, 02h
@@ -572,6 +583,7 @@ MENU    Proc
 		MOV     	DS,AX
 		MOV		AX,0B800H
 		MOV		ES,AX		; ES indica segmento de memória de VIDEO
+mostra_menu:
 		call 	APAGA_ECRAN 
 		call      Menu_Fich
 Tecla:
@@ -579,7 +591,8 @@ Tecla:
 		int		21h
 		cmp		AL, '1'
 		jne		not_one
-		jmp		one
+		call		one
+		jmp		mostra_menu
 not_one: 
 		cmp		AL, 'x'
 		jne		Tecla
