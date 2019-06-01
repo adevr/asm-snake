@@ -589,10 +589,10 @@ alimento endp
 ;             MAIN
 ;#############################################################################
 MENU    Proc
-		MOV     	AX,DSEG
-		MOV     	DS,AX
-		MOV		AX,0B800H
-		MOV		ES,AX		; ES indica segmento de memória de VIDEO
+		mov     	AX,DSEG
+		mov     	DS,AX
+		mov		AX,0B800H
+		mov		ES,AX		; ES indica segmento de memória de VIDEO
 		call 	APAGA_ECRAN 
 		call      Menu_Fich
 Tecla:
@@ -611,7 +611,7 @@ tecla_2:	CMP		AL, '2'
 		call      resultado
 		
 tecla_3:	CMP		AL, '3'
-		JNE		not_one
+		jne		not_one
 fim:	
 		MOV		AH,4Ch
 		INT		21h

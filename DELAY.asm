@@ -79,6 +79,13 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		HandleFich      dw      0
 		car_fich        db      ?
 		
+		FichRes			db	'resulta.dat',0
+		fhandle 		dw	0
+		buffer			dw	0
+		msgErrorCreate	db	"Ocorreu um erro na criacao do ficheiro!$"
+		msgErrorWrite	db	"Ocorreu um erro na escrita para ficheiro!$"
+		msgErrorClose	db	"Ocorreu um erro no fecho do ficheiro!$"
+
 DSEG    ENDS
 
 CSEG    SEGMENT PARA PUBLIC 'CODE'
@@ -88,7 +95,110 @@ CSEG    SEGMENT PARA PUBLIC 'CODE'
 
 ;********************************************************************************
 
+resultado proc
 
+	pushf
+	push ax
+	push dx
+	push cx
+
+
+		MOV		AX, DSEG	
+		MOV		DS, AX
+	
+		mov		ah, 3ch				; Abrir o ficheiro para escrita
+		mov		cx, 00H				; Define o tipo de ficheiro 
+		lea		dx, FichRes			; DX aponta para o nome do ficheiro 
+		int		21h					; Abre efectivamente o ficheiro (AX fica com o Handle do ficheiro)
+		jnc		escreve				; Se não existir erro escreve no ficheiro
+	
+		mov		ah, 09h
+		lea		dx, msgErrorCreate
+		int		21h
+	
+		jmp		fim
+
+escreve:
+		mov		bx, ax				; Coloca em BX o Handle
+		mov		ah, 40h				; indica que é para escrever
+    	
+		lea		dx, pontos			; DX aponta para a infromação a escrever
+		mov		cx, 240				; CX fica com o numero de bytes a escrever
+		int		21h					; Chama a rotina de escrita
+		jnc		close				; Se não existir erro na escrita fecha o ficheiro
+	
+		mov		ah, 09h
+		lea		dx, msgErrorWrite
+		int		21h
+close:
+		mov		ah,3eh				; fecha o ficheiro
+		int		21h
+		jnc		fim
+	
+		mov		ah, 09h
+		lea		dx, msgErrorClose
+		int		21h
+fim:
+		MOV		AH,4CH
+		INT		21H
+
+		pop cx
+		pop dx
+		pop ax
+		popf
+		ret
+resultado	endp
+
+Imp_Resultado	PROC
+;abre ficheiro
+
+        mov     ah,3dh			; vamos abrir ficheiro para leitura 
+        mov     al,0			; tipo de ficheiro	
+        lea     dx, Fich	; nome do ficheiro
+        int     21h			     ; abre para leitura 
+        jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
+        mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
+        jmp     ler_ciclo		; depois de abero vamos ler o ficheiro 
+
+erro_abrir:
+        mov     ah,09h
+        lea     dx,Erro_Open
+        int     21h
+        jmp     sai
+
+ler_ciclo:
+        mov     ah,3fh			; indica que vai ser lido um ficheiro 
+        mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto 
+        mov     cx,1			; numero de bytes a ler 
+        lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
+        int     21h			; faz efectivamente a leitura
+	jc	    erro_ler		; se carry é porque aconteceu um erro
+	cmp	    ax,0		;EOF?	verifica se já estamos no fim do ficheiro 
+	je	    fecha_ficheiro	; se EOF fecha o ficheiro 
+        mov     ah,02h			; coloca o caracter no ecran
+	mov	    dl,car_fich		; este é o caracter a enviar para o ecran
+	int	    21h			; imprime no ecran
+	jmp	    ler_ciclo		; continua a ler o ficheiro
+
+erro_ler:
+        mov     ah,09h
+        lea     dx,Erro_Ler_Msg
+        int     21h
+
+fecha_ficheiro:					; vamos fechar o ficheiro 
+        mov     ah,3eh
+        mov     bx,HandleFich
+        int     21h
+        jnc     sai
+
+        mov     ah,09h			; o ficheiro pode não fechar correctamente
+        lea     dx,Erro_Close
+        int     21h
+sai:	
+		ret
+Imp_Resultado	endp
+
+;########################################################################
 
 PASSA_TEMPO PROC	
  
@@ -223,7 +333,7 @@ Imp_Fich	PROC
 
         mov     ah,3dh			; vamos abrir ficheiro para leitura 
         mov     al,0			; tipo de ficheiro	
-        lea     dx,Fich		; nome do ficheiro
+        lea     dx, Fich	; nome do ficheiro
         int     21h			     ; abre para leitura 
         jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
         mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
@@ -579,27 +689,39 @@ alimento endp
 ;             MAIN
 ;#############################################################################
 MENU    Proc
-		MOV     	AX,DSEG
-		MOV     	DS,AX
-		MOV		AX,0B800H
-		MOV		ES,AX		; ES indica segmento de memória de VIDEO
+		mov    	AX,DSEG
+		mov     DS,AX
+		mov		AX,0B800H
+		mov		ES,AX		; ES indica segmento de memória de VIDEO
+
 mostra_menu:
 		call 	APAGA_ECRAN 
-		call      Menu_Fich
+		call    Menu_Fich
+
 Tecla:
 		mov		ah, 08h
 		int		21h
 		cmp		AL, '1'
-		jne		not_one
-		call		one
+		jne		tecla_2
+		call	one
 		jmp		mostra_menu
+
 not_one: 
 		cmp		AL, 'x'
 		jne		Tecla
-		jmp 		fim
+		jmp 	fim
+
+tecla_2:	
+		cmp		AL, '2'
+		jne		tecla_3
+		
+tecla_3:
+		cmp		AL, '3'
+		jne		not_one
+		call    resultado
 fim:	
-		MOV		AH,4Ch
-		INT		21h
+		mov		AH,4Ch
+		int		21h
 MENU    endp
 cseg	ends
 end     MENU
