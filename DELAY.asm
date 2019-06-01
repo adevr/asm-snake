@@ -78,6 +78,7 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		Fich         	db      'moldura.TXT',0
 		HandleFich      dw      0
 		car_fich        db      ?
+<<<<<<< Updated upstream
 		
 		FichRes			db	'resulta.dat',0
 		fhandle 		dw	0
@@ -85,6 +86,9 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		msgErrorCreate	db	"Ocorreu um erro na criacao do ficheiro!$"
 		msgErrorWrite	db	"Ocorreu um erro na escrita para ficheiro!$"
 		msgErrorClose	db	"Ocorreu um erro no fecho do ficheiro!$"
+=======
+		tam_snake		db		?
+>>>>>>> Stashed changes
 
 DSEG    ENDS
 
@@ -468,7 +472,10 @@ CICLO:
 		je		fim
 		cmp 	al, '_'	;  na posição do Cursor
 		je		fim
+		cmp 	al, ')'
+		jmp 		game_loop
 				
+<<<<<<< Updated upstream
 		;cmp 	al, '0'	;  cobra nao se mexeu!!!
 		;je		salta_alimento
 
@@ -482,6 +489,22 @@ CICLO:
 ;inserir_alimento:
 		
 salta_alimento:
+=======
+
+		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
+		mov		ah, 02h
+		mov		dl, ' ' 	; Coloca ESPAÇO
+		int		21H	
+
+		inc		POSxa
+		goto_xy	POSxa,POSya	
+		mov		ah, 02h
+		mov		dl, ' '		;  Coloca ESPAÇO
+		int		21H	
+		dec 	POSxa
+			
+		goto_xy		POSx,POSy	; Vai para posição do cursor
+>>>>>>> Stashed changes
 
 		goto_xy	POSxa,POSya	
 		mov		ah, 09h
@@ -497,6 +520,7 @@ IMPRIME:
 		mov		dl, '0'	; Coloca AVATAR1
 		int		21H
 		
+<<<<<<< Updated upstream
 		;inc		POSx
 		;goto_xy		POSx,POSy		
 		;mov		ah, 02h
@@ -504,6 +528,15 @@ IMPRIME:
 		;int		21H	
 		;dec		POSx
 		
+=======
+		inc		POSx
+		goto_xy		POSx,POSy		
+		mov		ah, 02h
+		mov		dl, '*'	; Coloca AVATAR2
+		int		21H	
+		dec		POSx
+
+>>>>>>> Stashed changes
 		goto_xy		POSx,POSy	; Vai para posição do cursor
 		
 		mov		al, POSx	; Guarda a posição do cursor
@@ -583,6 +616,30 @@ DIREITA:
 		jne		LER_SETA 
 		mov		direccao, 0	
 		jmp		LER_SETA
+
+game_loop:
+mov     al, 0
+mov     ah, 05h
+int     10h
+mov     dx, snake[0]
+mov     ah, 02h
+int     10h
+mov     al, '*'
+mov     ah, 09h
+mov     bl, 0eh
+mov     cx, 1
+int     10h
+mov     ax, snake[s_size * 2 - 2]
+mov     tail, ax
+call    move_snake
+mov     dx, tail
+mov     ah, 02h
+int     10h
+mov     al, ' '
+mov     ah, 09h
+mov     bl, 0eh
+mov     cx, 1
+int     10h
 
 fim:		goto_xy		40,23
 		; ...
