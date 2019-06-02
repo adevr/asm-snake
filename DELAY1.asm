@@ -1,11 +1,11 @@
 ;------------------------------------------------------------------------
 ;
 ;	Base para TRABALHO PRATICO - TECNOLOGIAS e ARQUITECTURAS de COMPUTADORES
-;
+;   
 ;	ANO LECTIVO 2018/2019
 ;
 ;
-;
+;	
 ;
 ;		press ESC to exit
 ;------------------------------------------------------------------------
@@ -24,18 +24,6 @@ GOTO_XY		MACRO	POSX,POSY
 			INT	10H
 ENDM
 
-; MOSTRA - Faz o display de uma string terminada em $
-;---------------------------------------------------------------------------
-MOSTRA MACRO STR
-MOV AH,09H
-LEA DX,STR
-INT 21H
-ENDM
-; FIM DAS MACROS
-
-
-;---------------------------------------------------------------------------
-
 
 .8086
 .model small
@@ -44,72 +32,46 @@ ENDM
 PILHA	SEGMENT PARA STACK 'STACK'
 		db 2048 dup(?)
 PILHA	ENDS
-
+	
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
         POSy    db 12	; a linha pode ir de [1..25]
 		POSx    db 40	; a coluna pode ir de [1..80]
         POSya	db	5	; Posição anterior de y
 		POSxa	db	10	; Posição anterior de x
-
+        linha   db 0
 		ultimo_num_aleat dw 0
 
-		pontos_m db  6 dup ('0'),'$'
+		pontos_m        db  6 dup ('0'),'$'
 		pontos 			db  6 dup ('0'),'$'
 
 		POSyf			db	3	; Posição fruta de y
 		POSxf			db	8	; Posição fruta de x
 
 
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-		PASSA_T		dw	0
-		PASSA_T_ant	dw	0
-		direccao	db	3
-
-		Centesimos	dw 	0
-		FACTOR		db	100
-=======
 		PASSA_T			dw	0
 		PASSA_T_ant		dw	0
 		direccao		db	3
 		
 		Centesimos		dw 	0
 		FACTOR			db	100
->>>>>>> Stashed changes:DELAY.asm
 		metade_FACTOR	db	?
 		resto			db	0
 
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-
-		Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
-		Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
-		Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-		FichMenu	 			db	    'menu.TXT', 0
-		Fich        	 	db      'moldura.TXT',0
-		HandleFich      dw      0
-		car_fich        db      ?
-
-		FichRes			db	'resulta.dat',0
-=======
 		
 		Erro_Open       db  'Erro ao tentar abrir o ficheiro$'
 		Erro_Ler_Msg    db  'Erro ao tentar ler do ficheiro$'
 		Erro_Close      db  'Erro ao tentar fechar o ficheiro$'
 		FichMenu		db  'menu.TXT', 0
 		Fich         	db  'moldura.TXT',0
-		FichRes			db	'resulta1.dat',0
+		FichRes			db	'resulta.dat',0
 		HandleFich      dw  0
 		car_fich        db  ?
->>>>>>> Stashed changes:DELAY.asm
 		fhandle 		dw	0
 		buffer			dw	0
 		msgErrorCreate	db	"Ocorreu um erro na criacao do ficheiro!$"
 		msgErrorWrite	db	"Ocorreu um erro na escrita para ficheiro!$"
 		msgErrorClose	db	"Ocorreu um erro no fecho do ficheiro!$"
-		tam_snake		db		?
-		snake		dw		?
-		tail			dw        ?
-		s_size		dw        ?
 
 		score			dw	123
 
@@ -119,7 +81,7 @@ DSEG    ENDS
 
 CSEG    SEGMENT PARA PUBLIC 'CODE'
 	ASSUME  CS:CSEG, DS:DSEG, SS:PILHA
-
+	
 
 
 ;********************************************************************************
@@ -132,43 +94,6 @@ resultado proc
 	push cx
 
 
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-		MOV		AX, DSEG
-		MOV		DS, AX
-
-		mov		ah, 3ch				; Abrir o ficheiro para escrita
-		mov		cx, 00H				; Define o tipo de ficheiro
-		lea		dx, FichRes			; DX aponta para o nome do ficheiro
-		int		21h					; Abre efectivamente o ficheiro (AX fica com o Handle do ficheiro)
-		jnc		escreve				; Se não existir erro escreve no ficheiro
-
-		mov		ah, 09h
-		lea		dx, msgErrorCreate
-		int		21h
-
-		jmp		fim
-
-escreve:
-		mov		bx, ax				; Coloca em BX o Handle
-		mov		ah, 40h				; indica que é para escrever
-
-		lea		dx, pontos			; DX aponta para a infromação a escrever
-		mov		cx, 240				; CX fica com o numero de bytes a escrever
-		int		21h					; Chama a rotina de escrita
-		jnc		close				; Se não existir erro na escrita fecha o ficheiro
-
-		mov		ah, 09h
-		lea		dx, msgErrorWrite
-		int		21h
-close:
-		mov		ah,3eh				; fecha o ficheiro
-		int		21h
-		jnc		fim
-
-		mov		ah, 09h
-		lea		dx, msgErrorClose
-		int		21h
-=======
 	mov		AX, DSEG	
 	mov		DS, AX
 	
@@ -207,7 +132,6 @@ close:
 	lea		dx, msgErrorClose
 	int		21h
 
->>>>>>> Stashed changes:DELAY.asm
 fim:
 	mov		AH,4CH
 	int		21H
@@ -222,15 +146,6 @@ resultado	endp
 Imp_Resultado	PROC
 ;abre ficheiro
 
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-        mov     ah,3dh			; vamos abrir ficheiro para leitura
-        mov     al,0			; tipo de ficheiro
-        lea     dx, FichRes	; nome do ficheiro
-        int     21h			     ; abre para leitura
-        jc      erro_abrir		; pode aconter erro a abrir o ficheiro
-        mov     HandleFich,ax		; ax devolve o Handle para o ficheiro
-        jmp     ler_ciclo		; depois de abero vamos ler o ficheiro
-=======
     mov     ah,3dh			; vamos abrir ficheiro para leitura 
     mov     al,0			; tipo de ficheiro	
     lea     dx, Fich	; nome do ficheiro
@@ -238,7 +153,6 @@ Imp_Resultado	PROC
     jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
     mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
     jmp     ler_ciclo		; depois de abero vamos ler o ficheiro 
->>>>>>> Stashed changes:DELAY.asm
 
 erro_abrir:
 	
@@ -248,20 +162,6 @@ erro_abrir:
     jmp     sai
 
 ler_ciclo:
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-        mov     ah,3fh			; indica que vai ser lido um ficheiro
-        mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto
-        mov     cx,1			; numero de bytes a ler
-        lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
-        int     21h			; faz efectivamente a leitura
-				jc	    erro_ler		; se carry é porque aconteceu um erro
-				cmp	    ax,0		;EOF?	verifica se já estamos no fim do ficheiro
-				je	    fecha_ficheiro	; se EOF fecha o ficheiro
-				mov     ah,02h			; coloca o caracter no ecran
-				mov	    dl,car_fich		; este é o caracter a enviar para o ecran
-				int	    21h			; imprime no ecran
-				jmp	    ler_ciclo		; continua a ler o ficheiro
-=======
 	
 	mov     ah,3fh			; indica que vai ser lido um ficheiro 
     mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto 
@@ -276,14 +176,13 @@ ler_ciclo:
 	int	    21h			; imprime no ecran
 	jmp	    ler_ciclo		; continua a ler o ficheiro
 	call	resultado
->>>>>>> Stashed changes:DELAY.asm
 
 erro_ler:
         mov     ah,09h
         lea     dx,Erro_Ler_Msg
         int     21h
 
-fecha_ficheiro:					; vamos fechar o ficheiro
+fecha_ficheiro:					; vamos fechar o ficheiro 
         mov     ah,3eh
         mov     bx,HandleFich
         int     21h
@@ -292,22 +191,22 @@ fecha_ficheiro:					; vamos fechar o ficheiro
         mov     ah,09h			; o ficheiro pode não fechar correctamente
         lea     dx,Erro_Close
         int     21h
-sai:
+sai:	
 		ret
 Imp_Resultado	endp
 
 ;########################################################################
 
-PASSA_TEMPO PROC
-
-
+PASSA_TEMPO PROC	
+ 
+		
 		MOV AH, 2CH             ; Buscar a hORAS
-		INT 21H
-
+		INT 21H                 
+		
  		XOR AX,AX
-		MOV AL, DL              ; centesimos de segundo para ax
+		MOV AL, DL              ; centesimos de segundo para ax		
 		mov Centesimos, AX
-
+	
 		mov bl, factor		; define velocidade da snake (100; 50; 33; 25; 20; 10)
 		div bl
 		mov resto, AH
@@ -323,16 +222,16 @@ PASSA_TEMPO PROC
 		cmp AX, BX
 		jbe Menor
 		mov AX, 1
-		mov PASSA_T, AX
-		jmp fim_passa
-
+		mov PASSA_T, AX	
+		jmp fim_passa	
+		
 Menor:		mov AX,0
-		mov PASSA_T, AX
+		mov PASSA_T, AX		
 
-fim_passa:
+fim_passa:	 
 
- 		RET
-PASSA_TEMPO   ENDP
+ 		RET 
+PASSA_TEMPO   ENDP 
 
 
 calc_aleat proc near
@@ -370,20 +269,20 @@ calc_aleat proc near
         ret
 calc_aleat endp
 
-;********************************************************************************
+;********************************************************************************	
 ;********************************************************************************
 ; ROTINA PARA ABRIR O MENU INICIAL
 ;********************************************************************************
 
 Menu_Fich PROC
 ; abre ficheiro
-	mov     ah,3dh			; vamos abrir ficheiro para leitura
-	mov     al,0			; tipo de ficheiro
+	mov     ah,3dh			; vamos abrir ficheiro para leitura 
+	mov     al,0			; tipo de ficheiro	
 	lea     dx,FichMenu		; nome do ficheiro
-	int     21h			     ; abre para leitura
-	jc      erro_abrirmenu		; pode aconter erro a abrir o ficheiro
-	mov     HandleFich,ax		; ax devolve o Handle para o ficheiro
-	jmp     ler_ciclomenu		; depois de abero vamos ler o ficheiro
+	int     21h			     ; abre para leitura 
+	jc      erro_abrirmenu		; pode aconter erro a abrir o ficheiro 
+	mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
+	jmp     ler_ciclomenu		; depois de abero vamos ler o ficheiro 
 
 	erro_abrirmenu:
 	mov     ah,09h
@@ -392,14 +291,14 @@ Menu_Fich PROC
 	jmp     sai
 
 	ler_ciclomenu:
-	mov     ah,3fh			; indica que vai ser lido um ficheiro
-	mov     bx,HandleFich	; bx deve conter o Handle do ficheiro previamente aberto
-	mov     cx,1			; numero de bytes a ler
+	mov     ah,3fh			; indica que vai ser lido um ficheiro 
+	mov     bx,HandleFich	; bx deve conter o Handle do ficheiro previamente aberto 
+	mov     cx,1			; numero de bytes a ler 
 	lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
 	int     21h			; faz efectivamente a leitura
 	jc	    erro_lermenu		; se carry é porque aconteceu um erro
-	cmp	    ax,0		     ;EOF?	verifica se já estamos no fim do ficheiro
-	je	    fecha_ficheiromenu	; se EOF fecha o ficheiro
+	cmp	    ax,0		     ;EOF?	verifica se já estamos no fim do ficheiro 
+	je	    fecha_ficheiromenu	; se EOF fecha o ficheiro 
 	mov     ah,02h			; coloca o caracter no ecran
 	mov	    dl,car_fich	; este é o caracter a enviar para o ecran
 	int	    21h			; imprime no ecran
@@ -410,7 +309,7 @@ Menu_Fich PROC
 	lea     dx,Erro_Ler_Msg
 	int     21h
 
-	fecha_ficheiromenu:					; vamos fechar o ficheiro
+	fecha_ficheiromenu:					; vamos fechar o ficheiro 
 	mov     ah,3eh
 	mov     bx,HandleFich
 	int     21h
@@ -429,13 +328,13 @@ Menu_Fich	endp
 Imp_Fich	PROC
 ;abre ficheiro
 
-        mov     ah,3dh			; vamos abrir ficheiro para leitura
-        mov     al,0			; tipo de ficheiro
+        mov     ah,3dh			; vamos abrir ficheiro para leitura 
+        mov     al,0			; tipo de ficheiro	
         lea     dx, Fich	; nome do ficheiro
-        int     21h			     ; abre para leitura
-        jc      erro_abrir		; pode aconter erro a abrir o ficheiro
-        mov     HandleFich,ax		; ax devolve o Handle para o ficheiro
-        jmp     ler_ciclo		; depois de abero vamos ler o ficheiro
+        int     21h			     ; abre para leitura 
+        jc      erro_abrir		; pode aconter erro a abrir o ficheiro 
+        mov     HandleFich,ax		; ax devolve o Handle para o ficheiro 
+        jmp     ler_ciclo		; depois de abero vamos ler o ficheiro 
 
 erro_abrir:
         mov     ah,09h
@@ -444,25 +343,25 @@ erro_abrir:
         jmp     sai
 
 ler_ciclo:
-        mov     ah,3fh			; indica que vai ser lido um ficheiro
-        mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto
-        mov     cx,1			; numero de bytes a ler
+        mov     ah,3fh			; indica que vai ser lido um ficheiro 
+        mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto 
+        mov     cx,1			; numero de bytes a ler 
         lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
         int     21h			; faz efectivamente a leitura
-				jc	    erro_ler		; se carry é porque aconteceu um erro
-				cmp	    ax,0		;EOF?	verifica se já estamos no fim do ficheiro
-				je	    fecha_ficheiro	; se EOF fecha o ficheiro
-				mov     ah,02h			; coloca o caracter no ecran
-				mov	    dl,car_fich		; este é o caracter a enviar para o ecran
-				int	    21h			; imprime no ecran
-				jmp	    ler_ciclo		; continua a ler o ficheiro
+	jc	    erro_ler		; se carry é porque aconteceu um erro
+	cmp	    ax,0		;EOF?	verifica se já estamos no fim do ficheiro 
+	je	    fecha_ficheiro	; se EOF fecha o ficheiro 
+        mov     ah,02h			; coloca o caracter no ecran
+	mov	    dl,car_fich		; este é o caracter a enviar para o ecran
+	int	    21h			; imprime no ecran
+	jmp	    ler_ciclo		; continua a ler o ficheiro
 
 erro_ler:
         mov     ah,09h
         lea     dx,Erro_Ler_Msg
         int     21h
 
-fecha_ficheiro:					; vamos fechar o ficheiro
+fecha_ficheiro:					; vamos fechar o ficheiro 
         mov     ah,3eh
         mov     bx,HandleFich
         int     21h
@@ -474,7 +373,7 @@ fecha_ficheiro:					; vamos fechar o ficheiro
 sai:	  RET
 Imp_Fich	endp
 
-main	proc
+main_score	proc
 
         mov ax, dseg
         mov ds, ax  
@@ -486,14 +385,17 @@ main	proc
     
 fim:
         lea dx, texto_score       ;print string ('....$)
-        mov ah, 09h
-        int 21h
-    
-        mov al, 0
-        mov ah, 4ch
-        int 21h
+        mov ax, 0b800h
+        mov es, ax
+        mov linha, 1
+        mov al, 160
+        mov ah, [linha]
+        mul ah
+        add ax, 60
+        mov bx, ax
+        int 10h
 
-main	endp
+main_score	endp
 
 CONVERTE    proc
     pushf
@@ -537,7 +439,7 @@ APAGA_ECRAN	PROC
 		MOV	CX,24*80
 		mov bx,160
 		MOV SI,BX
-APAGA:
+APAGA:	
 		MOV	AL,' '
 		MOV	BYTE PTR ES:[BX],AL
 		MOV	BYTE PTR ES:[BX+1],7
@@ -556,13 +458,13 @@ APAGA_ECRAN	ENDP
 ;*******************************************
 ; 	ROTINA PARA TER DELAY
 ;*******************************************
-delay proc
+delay proc   
   mov cx, 7      ;HIGH WORD.
   mov dx, 0A120h ;LOW WORD.
   mov ah, 86h    ;WAIT.
   int 15h
   ret
-delay endp
+delay endp 
 
 ;********************************************************************************
 ; LEITURA DE UMA TECLA DO TECLADO    (ALTERADO)
@@ -583,7 +485,7 @@ LE_TECLA_0	PROC
 		mov	AH, 0
 		mov	AL, 0
 		jmp	SAI_TECLA
-com_tecla:
+com_tecla:		
 		MOV	AH,08H
 		INT	21H
 		MOV	AH,0
@@ -592,7 +494,7 @@ com_tecla:
 		MOV	AH, 08H
 		INT	21H
 		MOV	AH,1
-SAI_TECLA:
+SAI_TECLA:	
 		RET
 LE_TECLA_0	ENDP
 
@@ -603,24 +505,19 @@ LE_TECLA_0	ENDP
 move_snake PROC
 	pushf
 	push ax
-	push bx
-	push cx
+    call        main_score
+    ; ...
 
-CICLO:
+CICLO:	
 		goto_xy	POSx,POSy	; Vai para nova possição
 		mov 	ah, 08h	; Guarda o Caracter que está na posição do Cursor
 		mov		bh,0		; numero da página
-		int		10h
+		int		10h			
 		cmp 	al, '|'	;  na posição do Cursor
 		je		fim
 		cmp 	al, '_'	;  na posição do Cursor
 		je		fim
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-		cmp 	al, ')'
-
-=======
-	
->>>>>>> Stashed changes:DELAY.asm
+				
 		;cmp 	al, '0'	;  cobra nao se mexeu!!!
 		;je		salta_alimento
 
@@ -630,61 +527,33 @@ CICLO:
 		je		salta_alimento
 		call 	alimento
 		;jne		inserir_alimento
-
+		
 ;inserir_alimento:
-
+		
 salta_alimento:
 
-		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
-		mov		ah, 02h
-		mov		dl, ' ' 	; Coloca ESPAÇO
-		int		21H
-
-		inc		POSxa
-		goto_xy	POSxa,POSya
-		mov		ah, 02h
-		mov		dl, ' '		;  Coloca ESPAÇO
-		int		21H
-		dec 	POSxa
-
-		goto_xy		POSx,POSy	; Vai para posição do cursor
-
-		goto_xy	POSxa,POSya
+		goto_xy	POSxa,POSya	
 		mov		ah, 09h
 		mov		bh, 0
 		mov		al, ' '		;  Coloca ESPAÇO
 		mov		bl, 00000111b
 		mov		cx, 1
-		int		10H
-
+		int		10H	
+		
 IMPRIME:
 		goto_xy		POSx,POSy	; Vai para posição do cursor
 		mov		ah, 02h
 		mov		dl, '0'	; Coloca AVATAR1
 		int		21H
 
-		;inc		POSx
-		;goto_xy		POSx,POSy
-		;mov		ah, 02h
-		;mov		dl, '*'	; Coloca AVATAR2
-		;int		21H
-		;dec		POSx
-
-		inc		POSx
-		goto_xy		POSx,POSy
-		mov		ah, 02h
-		mov		dl, '*'	; Coloca AVATAR2
-		int		21H
-		dec		POSx
-
 		goto_xy		POSx,POSy	; Vai para posição do cursor
-
+		
 		mov		al, POSx	; Guarda a posição do cursor
 		mov		POSxa, al
 		mov		al, POSy	; Guarda a posição do cursor
 		mov 	POSya, al
-
-
+		
+		
 
 LER_SETA:	call 		LE_TECLA_0
 		cmp		ah, 1
@@ -703,38 +572,38 @@ TESTE_3:	CMP		AL, '3'
 TESTE_4:	CMP		AL, '4'
 		JNE		TESTE_END
 		MOV		FACTOR, 10
-TESTE_END:
+TESTE_END:		
 		CALL		PASSA_TEMPO
 		mov		AX, PASSA_T_ant
 		CMP		AX, PASSA_T
 		je		LER_SETA
 		mov		AX, PASSA_T
 		mov		PASSA_T_ant, AX
-
+		
 verifica_0:	mov		al, direccao
 		cmp 		al, 0
 		jne		verifica_1
 		inc		POSx		;Direita
 		jmp		CICLO
-
+		
 verifica_1:	mov 		al, direccao
 		cmp		al, 1
 		jne		verifica_2
 		dec		POSy		;cima
 		jmp		CICLO
-
+		
 verifica_2:	mov 		al, direccao
 		cmp		al, 2
 		jne		verifica_3
 		dec		POSx		;Esquerda
 		jmp		CICLO
-
+		
 verifica_3:	mov 		al, direccao
-		cmp		al, 3
+		cmp		al, 3		
 		jne		CICLO
-		inc		POSy		;BAIXO
+		inc		POSy		;BAIXO		
 		jmp		CICLO
-
+		
 ESTEND:		cmp 		al,48h
 		jne		BAIXO
 		mov		direccao, 1
@@ -753,23 +622,14 @@ ESQUERDA:
 
 DIREITA:
 		cmp		al,4Dh
-		jne		LER_SETA
-		mov		direccao, 0
+		jne		LER_SETA 
+		mov		direccao, 0	
 		jmp		LER_SETA
-		
-
 
 fim:		goto_xy		40,23
-<<<<<<< Updated upstream:Experiences/DELAY.asm
-
-		pop 	cx
-		pop	bx
-		pop 	ax
-=======
-		; ...
-		call	resultado		
+        ; ...
+        
 		pop ax
->>>>>>> Stashed changes:DELAY.asm
 		popf
 		RET
 move_snake ENDP
@@ -783,7 +643,7 @@ one proc
 	call      alimento
 	call      alimento
 	call      alimento
-	call		move_snake
+    call		move_snake
 	ret
 one endp
 
@@ -873,40 +733,36 @@ alimento endp
 ;#############################################################################
 MENU    Proc
 		mov    	AX,DSEG
-		mov       DS,AX
+		mov     DS,AX
 		mov		AX,0B800H
 		mov		ES,AX		; ES indica segmento de memória de VIDEO
 
 mostra_menu:
-		call    	APAGA_ECRAN
-		call    	Menu_Fich
+		call 	APAGA_ECRAN 
+		call    Menu_Fich
 
-mostra_resultado:
-		call 	APAGA_ECRAN
-		call		resultado
 Tecla:
 		mov		ah, 08h
 		int		21h
 		cmp		AL, '1'
 		jne		tecla_2
-		call		one
+		call	one
 		jmp		mostra_menu
 
-not_one:
+not_one: 
 		cmp		AL, 'x'
 		jne		Tecla
 		jmp 	fim
 
-tecla_2:
+tecla_2:	
 		cmp		AL, '2'
 		jne		tecla_3
-		jmp		mostra_resultado
-
+		
 tecla_3:
 		cmp		AL, '3'
 		jne		not_one
-		call    	resultado
-fim:
+		call    resultado
+fim:	
 		mov		AH,4Ch
 		int		21h
 MENU    endp
