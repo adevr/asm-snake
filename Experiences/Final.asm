@@ -47,19 +47,30 @@ PILHA	ENDS
 
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
+		texto db 'Pontos = ____ $'
 		POSy    	db 	12	; a linha pode ir de [1..25]
 		POSx      db 	40	; a coluna pode ir de [1..80]
 		POSya	db	5	; Posição anterior de y
 		POSxa	db	10	; Posição anterior de x
 
 		corpo	db 1
+		ponto2		dw  10000
 		ultimo_num_aleat dw 0
 
-		pontos_m 	db  6 dup ('0'),'$'
-		pontos	db  6 dup ('0'),'$'
+		pontos_print 	db  6 dup ('0'),'$'
+		n_digitos       dw  0
+		pontos      dw  0   ; Pontuacao
 
 		POSyf	db	3	; Posição fruta de y
 		POSxf	db	8	; Posição fruta de x
+		POSyr	db	15	; Posição  rato de y
+		POSxr	db	10	; Posição  rato de x
+
+		fruta   db  0   ; Contador de frutas
+		ratos   db  0   ; Contador de ratos
+		fruta_t dw  5   ; Temporizador colocar fruta
+		rato_t  dw  0   ; Temporizador colocar ratos
+
 
 
 		PASSA_T		dw	0
@@ -404,6 +415,64 @@ APAGA:
 		RET
 APAGA_ECRAN	ENDP
 
+;------------------------------------------------------------------------
+;   ROTINA PARA CONVERTER NUMEROS EM STRING's                           |
+;------------------------------------------------------------------------
+converte_num proc
+        pushf
+        push    cx
+        push    dx
+        push    di
+
+        mov     di,n_digitos
+        mov     cx,10
+
+ciclo:
+        xor     dx,dx
+        div     cx
+        add     dl,48
+        mov     [bx+di],dl
+        dec     di
+        cmp     ax,0
+        jne     ciclo
+
+        pop     di
+        pop     dx
+        pop     cx
+        popf
+        ret
+converte_num endp
+
+
+
+;------------------------------------------------------------------------
+;   ROTINA PARA COLOCAR A PONTUACAO                                     |
+;------------------------------------------------------------------------
+pontuacao proc
+			pushf
+			push    ax
+			push    bx
+			push    dx
+
+			goto_xy	0,0            ; Escreve a pontuacao atual no ecra
+			xor     ax,ax
+			mov     ax, pontos
+
+			lea     bx,pontos_print
+			mov     n_digitos,5     ; Define o numero de digitos do numero a imprimir no ecra
+			call    converte_num
+
+			lea     dx,pontos_print
+			mov     ah,09h
+			int     21h
+
+			pop     dx
+			pop     bx
+			pop     ax
+			popf
+			ret
+pontuacao endp
+
 
 ;*******************************************
 ; 	ROTINA PARA TER DELAY
@@ -460,54 +529,125 @@ move_snake PROC
 	; ...
 
 CICLO:
-		goto_xy	POSx,POSy	; Vai para nova possição
-		mov 	ah, 08h	; Guarda o Caracter que está na posição do Cursor
-		mov		bh,0		; numero da página
-		int		10h
-		cmp 	al, '|'	;  na posição do Cursor
-		je		fim
-		cmp 	al, '_'	;  na posição do Cursor
-		je		fim
+				call ponto1
+				goto_xy	POSx,POSy	; Vai para nova possição
+				mov 	ah, 08h	; Guarda o Caracter que está na posição do Cursor
+				mov		bh,0		; numero da página
+				int		10h
+				cmp 	al, '|'	;  na posição do Cursor
+				je		fim
+				cmp 	al, '_'	;  na posição do Cursor
+				je		fim
 
-		;cmp 	al, '0'	;  cobra nao se mexeu!!!
-		;je		salta_alimento
+				cmp 		al, ' '
+				je		fim_alimento
+				call 	alimento
 
-		;goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
-		;mov		ah, 02h
-		cmp 		al, ' '
-		je		salta_alimento
-		call 	alimento
+				cmp     al, 0BEh    ; Verifica alimento comido maca verde
+				je      come_macav
+
+				cmp     al, 0BDh    ; Verifica alimento comido maca madura
+				je      come_macam
+
+				cmp     al, 0CFh    ; Verifica alimento comido rato
+				je      come_rato
+
+				jmp     fim_alimento
+
+come_macav:
+				inc     pontos          ; Adiciona a pontuacao de acordo com o fruto comido
+				inc	corpo
+
+				dec     fruta
+				CALL PONTUACAO
+				jmp     fim_alimento
+
+come_macam:
+				add     pontos,2        ; Adiciona a pontuacao de acordo com o fruto comido
+				inc	corpo
+				inc	corpo
+				dec     fruta
+				CALL PONTUACAO
+				jmp     fim_alimento
+
+come_rato:
+				add     pontos,3        ; Adiciona a pontuacao de acordo com o fruto comido
+				jnb	subtrai
+
+
+				CALL PONTUACAO
+				jmp 	fim_alimento
+
+subtrai:
+				xor ax,AX
+				mov al,corpo
+
+				mov si,ax
+				mov al,5
+
+diminuir:					;DESENHA COBRA POR ARRY
+				push ax
+				goto_xy		POSxa[si],POSya[si]		; Vai para a posição anterior do cursor
+				mov		ah, 02h
+				mov		dl, ' ' 	; Coloca ESPAÇO
+				int		21H
+				pop ax
+				dec corpo
+				cmp al,0
+				je fdiminuir
+				dec al
+				cmp si,0
+				dec si
+				jne diminuir
+fdiminuir:
+        INC     ratos
+        CALL PONTUACAO
+
 		;jne		inserir_alimento
+fim_alimento:
+				jmp  continua
+continua:
+				xor ax,ax
+				mov al,corpo
+				mov si,ax
 
-salta_alimento:
+				goto_xy		POSxa[si],POSya[si]		; Vai para a posição anterior do cursor
+				mov		ah, 02h
+				mov		dl, ' ' 	; Coloca ESPAÇO
+				int		21H
 
-		goto_xy	POSxa,POSya
-		mov		ah, 09h
-		mov		bh, 0
-		mov		al, ' '		;  Coloca ESPAÇO
-		mov		bl, 00000111b
-		mov		cx, 1
-		int		10H
+
+				goto_xy	POSx,POSy	; Vai para posição do cursorai para posição do cursor
 
 IMPRIME:
-		goto_xy		POSx,POSy	; Vai para posição do cursor
+
+		mov	ah, 09h
+		mov     bl, 00000111b
+		mov     cx, 1
+		int     10h
 		mov		ah, 02h
-		mov		dl, '0'	; Coloca AVATAR1
-		int		21H
+		mov		dl, 02h	    ; Coloca AVATAR
+		int		21h
 
-		;inc		POSx
-		;goto_xy		POSx,POSy
-		;mov		ah, 02h
-		;mov		dl, '*'	; Coloca AVATAR2
-		;int		21H
-		;dec		POSx
+		goto_xy		POSx,POSy
 
-		goto_xy		POSx,POSy	; Vai para posição do cursor
+		mov		al, POSx	; Guarda a posição do cursor NO ARRY ALTERADO POR JOSE DIAS
+		mov		POSxa[0], al
+		mov		al, POSy	; Guarda a posição do cursor NO ARRY
+		mov 		POSya[0], al
 
-		mov		al, POSx	; Guarda a posição do cursor
-		mov		POSxa, al
-		mov		al, POSy	; Guarda a posição do cursor
-		mov 	POSya, al
+		xor ax,ax				;DESENHA COBRA POR ARRY
+		mov al,corpo
+		mov si,ax
+
+cresce:					;DESENHA COBRA POR ARRY
+		mov al,posxa[si-1]
+		mov posxa[si],al
+		mov al,posya[si-1]
+		mov posya[si],al
+		cmp si,0
+		dec si
+		ja cresce
 
 
 
@@ -659,10 +799,70 @@ posicao_y:
         jp      maca_madura
         jnp     maca_verde
 
+elimina_rato:
+        cmp     rato_t,24      ; Verifica se passou tempo para desaparecer o rato
+        jb      fim_rato
+        mov     rato_t,0
+
+        goto_xy POSxr,POSyr     ; Elimina rato do ecra de jogo
+        mov		ah, 09h
+        mov     bl, 00000111b
+        mov     cx, 1
+        int     10h
+        mov		ah, 02h
+        mov		dl, ' '
+        int		21h
+        dec     ratos
+        jmp     fim_rato
+
+insere_rato:
+        cmp     rato_t,20   ; Verifica se passou tempo para inserir rato
+        jb      fim_rato
+
+        mov     dl,POSxf        ; Guarda coordenada X onde rato vai ser inserido
+        mov     POSxr,dl
+        mov     dl,POSyf        ; Guarda coordenada Y onde rato vai ser inserido
+        mov     POSyr,dl
+
+        goto_xy POSxf,POSyf     ; Insere rato no ecra de jogo
+        mov	ah, 09h
+        mov     bl, 10000111b
+        mov     cx, 1
+        int     10h
+        mov	ah, 02h
+        mov	dl, 0CFh
+        int	21h
+        inc     ratos
+
+fim_rato:
+
+        cmp     fruta,4     ; Verifica se esta o numero maximo de frutas no ecra
+        je      fim_fruta
+        cmp     fruta_t,5   ; Verifica se passou tempo para inserir fruta
+        jb      fim_fruta
+        mov     fruta_t,0
+
+        call	calc_aleat	; Calcula próximo aleatório para escolher o tipo de fruto
+        pop	    ax
+        and     ax,00000001
+
+        jp      maca_madura     ; Verifica se insere maca madura ou verde
+
+        goto_xy POSxf,POSyf     ; Insere maca verde no ecra de jogo
+        mov		ah, 09h
+        mov     bl, 00000010b
+        mov     cx, 1
+        int     10h
+        mov		ah, 02h
+        mov		dl, 0BEh
+        int		21h
+        inc     fruta
+        jmp     fim_fruta
+
 maca_verde:
         goto_xy POSxf,POSyf
         mov		ah, 09h
-        mov     bl, 'v'
+        mov     bl, 00000100b
         mov     cx, 1
         int     10h
         mov		ah, 02h
@@ -684,6 +884,46 @@ maca_madura:
 fim_fruta:
         ret
 alimento endp
+
+ponto1 proc
+
+				mov    ax,ponto2
+        lea    bx,texto
+        add    bx,8
+        call   converte
+				goto_xy	0,0
+				lea dx, texto
+				mov ah,09h
+				int    21h
+
+; pontos
+
+   converte proc
+
+        pushf
+        push cx
+        push dx
+        push di
+
+        mov cx,10
+        mov di,4
+ciclo2:
+        mov dx,0
+        div cx
+        add dl,48
+        mov[bx+di],dl
+        dec di
+        cmp di,0
+        jne ciclo2
+
+        pop di
+        pop dx
+        pop cx
+        popf
+        ret
+converte endp
+ponto1 endp
+
 
 ;#############################################################################
 ;             MAIN
