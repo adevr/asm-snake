@@ -47,15 +47,16 @@ PILHA	ENDS
 
 
 DSEG    SEGMENT PARA PUBLIC 'DATA'
-        POSy    db 12	; a linha pode ir de [1..25]
-		POSx    db 40	; a coluna pode ir de [1..80]
-        POSya	db	5	; Posição anterior de y
+		POSy    	db 	12	; a linha pode ir de [1..25]
+		POSx      db 	40	; a coluna pode ir de [1..80]
+		POSya	db	5	; Posição anterior de y
 		POSxa	db	10	; Posição anterior de x
 
+		corpo	db 1
 		ultimo_num_aleat dw 0
 
-		pontos_m db  6 dup ('0'),'$'
-		pontos db  6 dup ('0'),'$'
+		pontos_m 	db  6 dup ('0'),'$'
+		pontos	db  6 dup ('0'),'$'
 
 		POSyf	db	3	; Posição fruta de y
 		POSxf	db	8	; Posição fruta de x
@@ -74,21 +75,18 @@ DSEG    SEGMENT PARA PUBLIC 'DATA'
 		Erro_Open       db      'Erro ao tentar abrir o ficheiro$'
 		Erro_Ler_Msg    db      'Erro ao tentar ler do ficheiro$'
 		Erro_Close      db      'Erro ao tentar fechar o ficheiro$'
-		FichMenu	 			db	    'menu.TXT', 0
-		Fich        	 	db      'moldura.TXT',0
+		FichMenu				db   		'menu.TXT', 0
+		Fich         	  db     	'moldura.TXT',0
 		HandleFich      dw      0
 		car_fich        db      ?
 
-		FichRes			db	'resulta.dat',0
-		fhandle 		dw	0
-		buffer			dw	0
-		msgErrorCreate	db	"Ocorreu um erro na criacao do ficheiro!$"
-		msgErrorWrite	db	"Ocorreu um erro na escrita para ficheiro!$"
-		msgErrorClose	db	"Ocorreu um erro no fecho do ficheiro!$"
+		FichRes		db	    'resulta.dat',0
+		fhandle 		dw		0
+		buffer		dw		0
+		msgErrorCreate	db		"Ocorreu um erro na criacao do ficheiro!$"
+		msgErrorWrite	db		"Ocorreu um erro na escrita para ficheiro!$"
+		msgErrorClose	db		"Ocorreu um erro no fecho do ficheiro!$"
 		tam_snake		db		?
-		snake		dw		?
-		tail			dw        ?
-		s_size		dw        ?
 
 DSEG    ENDS
 
@@ -99,110 +97,6 @@ CSEG    SEGMENT PARA PUBLIC 'CODE'
 
 ;********************************************************************************
 
-resultado proc
-
-	pushf
-	push ax
-	push dx
-	push cx
-
-
-		MOV		AX, DSEG
-		MOV		DS, AX
-
-		mov		ah, 3ch				; Abrir o ficheiro para escrita
-		mov		cx, 00H				; Define o tipo de ficheiro
-		lea		dx, FichRes			; DX aponta para o nome do ficheiro
-		int		21h					; Abre efectivamente o ficheiro (AX fica com o Handle do ficheiro)
-		jnc		escreve				; Se não existir erro escreve no ficheiro
-
-		mov		ah, 09h
-		lea		dx, msgErrorCreate
-		int		21h
-
-		jmp		fim
-
-escreve:
-		mov		bx, ax				; Coloca em BX o Handle
-		mov		ah, 40h				; indica que é para escrever
-
-		lea		dx, pontos			; DX aponta para a infromação a escrever
-		mov		cx, 240				; CX fica com o numero de bytes a escrever
-		int		21h					; Chama a rotina de escrita
-		jnc		close				; Se não existir erro na escrita fecha o ficheiro
-
-		mov		ah, 09h
-		lea		dx, msgErrorWrite
-		int		21h
-close:
-		mov		ah,3eh				; fecha o ficheiro
-		int		21h
-		jnc		fim
-
-		mov		ah, 09h
-		lea		dx, msgErrorClose
-		int		21h
-fim:
-		MOV		AH,4CH
-		INT		21H
-
-		pop cx
-		pop dx
-		pop ax
-		popf
-		ret
-resultado	endp
-
-Imp_Resultado	PROC
-;abre ficheiro
-
-        mov     ah,3dh			; vamos abrir ficheiro para leitura
-        mov     al,0			; tipo de ficheiro
-        lea     dx, FichRes	; nome do ficheiro
-        int     21h			     ; abre para leitura
-        jc      erro_abrir		; pode aconter erro a abrir o ficheiro
-        mov     HandleFich,ax		; ax devolve o Handle para o ficheiro
-        jmp     ler_ciclo		; depois de abero vamos ler o ficheiro
-
-erro_abrir:
-        mov     ah,09h
-        lea     dx,Erro_Open
-        int     21h
-        jmp     sai
-
-ler_ciclo:
-        mov     ah,3fh			; indica que vai ser lido um ficheiro
-        mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto
-        mov     cx,1			; numero de bytes a ler
-        lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
-        int     21h			; faz efectivamente a leitura
-				jc	    erro_ler		; se carry é porque aconteceu um erro
-				cmp	    ax,0		;EOF?	verifica se já estamos no fim do ficheiro
-				je	    fecha_ficheiro	; se EOF fecha o ficheiro
-				mov     ah,02h			; coloca o caracter no ecran
-				mov	    dl,car_fich		; este é o caracter a enviar para o ecran
-				int	    21h			; imprime no ecran
-				jmp	    ler_ciclo		; continua a ler o ficheiro
-
-erro_ler:
-        mov     ah,09h
-        lea     dx,Erro_Ler_Msg
-        int     21h
-
-fecha_ficheiro:					; vamos fechar o ficheiro
-        mov     ah,3eh
-        mov     bx,HandleFich
-        int     21h
-        jnc     sai
-
-        mov     ah,09h			; o ficheiro pode não fechar correctamente
-        lea     dx,Erro_Close
-        int     21h
-sai:
-		ret
-Imp_Resultado	endp
-
-;########################################################################
 
 PASSA_TEMPO PROC
 
@@ -243,11 +137,11 @@ PASSA_TEMPO   ENDP
 
 calc_aleat proc near
         sub	    sp,2
-        push	bp
+        push	    bp
         mov	    bp,sp
-        push	ax
-        push	cx
-        push	dx
+        push		ax
+        push		cx
+        push		dx
 
         mov	    ax,[bp+4]
         mov	    [bp+2],ax
@@ -258,10 +152,10 @@ calc_aleat proc near
         add	    dx,ultimo_num_aleat	    ; vai buscar o aleatório anterior
         add	    cx,dx
         mov	    ax,65521
-        push	dx
+        push	    dx
         mul	    cx
         pop	    dx
-        xchg	dl,dh
+        xchg	    dl,dh
         add	    dx,32749
         add	    dx,ax
 
@@ -298,15 +192,15 @@ Menu_Fich PROC
 	jmp     sai
 
 	ler_ciclomenu:
-	mov     ah,3fh			; indica que vai ser lido um ficheiro
-	mov     bx,HandleFich	; bx deve conter o Handle do ficheiro previamente aberto
-	mov     cx,1			; numero de bytes a ler
-	lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
-	int     21h			; faz efectivamente a leitura
+	mov      ah,3fh			; indica que vai ser lido um ficheiro
+	mov      bx,HandleFich	; bx deve conter o Handle do ficheiro previamente aberto
+	mov      cx,1			; numero de bytes a ler
+	lea      dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
+	int      21h			; faz efectivamente a leitura
 	jc	    erro_lermenu		; se carry é porque aconteceu um erro
 	cmp	    ax,0		     ;EOF?	verifica se já estamos no fim do ficheiro
 	je	    fecha_ficheiromenu	; se EOF fecha o ficheiro
-	mov     ah,02h			; coloca o caracter no ecran
+	mov      ah,02h			; coloca o caracter no ecran
 	mov	    dl,car_fich	; este é o caracter a enviar para o ecran
 	int	    21h			; imprime no ecran
 	jmp	    ler_ciclomenu		; continua a ler o ficheiro
@@ -329,7 +223,107 @@ Menu_Fich PROC
 Menu_Fich	endp
 
 ;*************************************************************************
-;	ROTINA PARA ABRIR
+;	ROTINA PARA ABRIR OS RESULTADOS
+;*************************************************************************
+
+resultado proc
+
+		MOV		AX, DSEG
+		MOV		DS, AX
+
+		mov		ah, 3ch				; Abrir o ficheiro para escrita
+		mov		cx, 00H				; Define o tipo de ficheiro
+		lea		dx, FichRes			; DX aponta para o nome do ficheiro
+		int		21h					; Abre efectivamente o ficheiro (AX fica com o Handle do ficheiro)
+		jnc		escreve				; Se não existir erro escreve no ficheiro
+
+		mov		ah, 09h
+		lea		dx, msgErrorCreate
+		int		21h
+
+		jmp		fim
+
+escreve:
+		mov		bx, ax				; Coloca em BX o Handle
+		mov		ah, 40h				; indica que é para escrever
+
+		lea		dx, pontos			; DX aponta para a infromação a escrever
+		mov		cx, 240				; CX fica com o numero de bytes a escrever
+		int		21h					; Chama a rotina de escrita
+		jnc		close				; Se não existir erro na escrita fecha o ficheiro
+
+		mov		ah, 09h
+		lea		dx, msgErrorWrite
+		int		21h
+close:
+		mov		ah,3eh				; fecha o ficheiro
+		int		21h
+		jnc		fim
+
+		mov		ah, 09h
+		lea		dx, msgErrorClose
+		int		21h
+fim:
+
+		MOV		AH,4CH
+		INT		21H
+		call Imp_Res
+
+		ret
+resultado	endp
+
+Imp_Res	PROC
+;abre ficheiro
+
+        mov     ah,3dh			; vamos abrir ficheiro para leitura
+        mov     al,0			; tipo de ficheiro
+        lea     dx,FichRes		; nome do ficheiro
+        int     21h			     ; abre para leitura
+        jc      erro_abrir		; pode aconter erro a abrir o ficheiro
+        mov     HandleFich,ax		; ax devolve o Handle para o ficheiro
+        jmp     ler_ciclo		; depois de abero vamos ler o ficheiro
+
+erro_abrir:
+        mov     ah,09h
+        lea     dx,Erro_Open
+        int     21h
+        jmp     sai
+
+ler_ciclo:
+        mov     ah,3fh			; indica que vai ser lido um ficheiro
+        mov     bx,HandleFich		; bx deve conter o Handle do ficheiro previamente aberto
+        mov     cx,1			; numero de bytes a ler
+        lea     dx,car_fich		; vai ler para o local de memoria apontado por dx (car_fich)
+        int     21h			; faz efectivamente a leitura
+				jc	    erro_ler		; se carry é porque aconteceu um erro
+				cmp	    ax,0		;EOF?	verifica se já estamos no fim do ficheiro
+				je	    fecha_ficheiro	; se EOF fecha o ficheiro
+				mov     ah,02h			; coloca o caracter no ecran
+				mov	    dl,car_fich		; este é o caracter a enviar para o ecran
+				int	    21h			; imprime no ecran
+				jmp	    ler_ciclo		; continua a ler o ficheiro
+
+erro_ler:
+        mov     ah,09h
+        lea     dx,Erro_Ler_Msg
+        int     21h
+
+fecha_ficheiro:					; vamos fechar o ficheiro
+        mov     ah,3eh
+        mov     bx,HandleFich
+        int     21h
+        jnc     sai
+
+        mov     ah,09h			; o ficheiro pode não fechar correctamente
+        lea     dx,Erro_Close
+        Int     21h
+sai:	  RET
+Imp_Res	endp
+
+
+
+;*************************************************************************
+;	ROTINA PARA ABRIR JOGO
 ;*************************************************************************
 
 Imp_Fich	PROC
@@ -337,7 +331,7 @@ Imp_Fich	PROC
 
         mov     ah,3dh			; vamos abrir ficheiro para leitura
         mov     al,0			; tipo de ficheiro
-        lea     dx, Fich	; nome do ficheiro
+        lea     dx,Fich		; nome do ficheiro
         int     21h			     ; abre para leitura
         jc      erro_abrir		; pode aconter erro a abrir o ficheiro
         mov     HandleFich,ax		; ax devolve o Handle para o ficheiro
@@ -460,9 +454,10 @@ LE_TECLA_0	ENDP
 ;*****************************************************************************
 move_snake PROC
 	pushf
-	push ax
-	push bx
-	push cx
+	push 	cx
+	push		bx
+	push 	ax
+	; ...
 
 CICLO:
 		goto_xy	POSx,POSy	; Vai para nova possição
@@ -473,7 +468,6 @@ CICLO:
 		je		fim
 		cmp 	al, '_'	;  na posição do Cursor
 		je		fim
-		cmp 	al, ')'
 
 		;cmp 	al, '0'	;  cobra nao se mexeu!!!
 		;je		salta_alimento
@@ -485,23 +479,7 @@ CICLO:
 		call 	alimento
 		;jne		inserir_alimento
 
-;inserir_alimento:
-
 salta_alimento:
-
-		goto_xy	POSxa,POSya		; Vai para a posição anterior do cursor
-		mov		ah, 02h
-		mov		dl, ' ' 	; Coloca ESPAÇO
-		int		21H
-
-		inc		POSxa
-		goto_xy	POSxa,POSya
-		mov		ah, 02h
-		mov		dl, ' '		;  Coloca ESPAÇO
-		int		21H
-		dec 	POSxa
-
-		goto_xy		POSx,POSy	; Vai para posição do cursor
 
 		goto_xy	POSxa,POSya
 		mov		ah, 09h
@@ -523,13 +501,6 @@ IMPRIME:
 		;mov		dl, '*'	; Coloca AVATAR2
 		;int		21H
 		;dec		POSx
-
-		inc		POSx
-		goto_xy		POSx,POSy
-		mov		ah, 02h
-		mov		dl, '*'	; Coloca AVATAR2
-		int		21H
-		dec		POSx
 
 		goto_xy		POSx,POSy	; Vai para posição do cursor
 
@@ -718,43 +689,38 @@ alimento endp
 ;             MAIN
 ;#############################################################################
 MENU    Proc
-		mov    	AX,DSEG
-		mov       DS,AX
-		mov		AX,0B800H
-		mov		ES,AX		; ES indica segmento de memória de VIDEO
-
+		MOV     	AX,DSEG
+		MOV     	DS,AX
+		MOV		AX,0B800H
+		MOV		ES,AX		; ES indica segmento de memória de VIDEO
 mostra_menu:
-		call    	APAGA_ECRAN
-		call    	Menu_Fich
+		call 			APAGA_ECRAN
+		call      Menu_Fich
 
 mostra_resultado:
-		call 	APAGA_ECRAN
-		call		resultado
+		;call 			APAGA_ECRAN
+		;call 			resultado
+
 Tecla:
 		mov		ah, 08h
 		int		21h
 		cmp		AL, '1'
-		jne		tecla_2
+	;	jne		tecla_2
+	jne not_one
 		call		one
 		jmp		mostra_menu
+tecla_2:
+	;	cmp   AL, '2'
+	;	jne   not_one
+	;	jmp		mostra_resultado
 
 not_one:
-		cmp		AL, 'x'
+		cmp		AL, 'X'
 		jne		Tecla
-		jmp 	fim
-
-tecla_2:
-		cmp		AL, '2'
-		jne		tecla_3
-		jmp		mostra_resultado
-
-tecla_3:
-		cmp		AL, '3'
-		jne		not_one
-		call    	resultado
+		jmp 		fim
 fim:
-		mov		AH,4Ch
-		int		21h
+		MOV		AH,4Ch
+		INT		21h
 MENU    endp
 cseg	ends
 end     MENU
